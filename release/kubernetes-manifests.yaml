@@ -212,6 +212,12 @@ spec:
         ports:
         - containerPort: 3550
         env:
+        - name: COLLECTOR_SERVICE_ADDR
+          value: "localhost:4317"
+        - name: ENABLE_STATS
+          value: "1"
+        - name: ENABLE_TRACING
+          value: "1"
         - name: PORT
           value: "3550"
         - name: DISABLE_PROFILER
@@ -417,6 +423,8 @@ spec:
       app: cartservice
   template:
     metadata:
+      annotations:
+        "instrumentation.opentelemetry.io/inject-dotnet": "true"
       labels:
         app: cartservice
     spec:
@@ -560,6 +568,8 @@ spec:
       app: emailservice
   template:
     metadata:
+      annotations:
+        "instrumentation.opentelemetry.io/inject-python": "true"
       labels:
         app: emailservice
     spec:
@@ -711,6 +721,7 @@ spec:
       labels:
         app: frontend
       annotations:
+        "instrumentation.opentelemetry.io/inject-go": "true"
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
     spec:
       serviceAccountName: frontend
@@ -750,6 +761,8 @@ spec:
           env:
           - name: PORT
             value: "8080"
+          - name: COLLECTOR_SERVICE_ADDR
+            value: "localhost:4317"
           - name: PRODUCT_CATALOG_SERVICE_ADDR
             value: "productcatalogservice:3550"
           - name: CURRENCY_SERVICE_ADDR
@@ -768,10 +781,12 @@ spec:
             value: "shoppingassistantservice:80"
           # # ENV_PLATFORM: One of: local, gcp, aws, azure, onprem, alibaba
           # # When not set, defaults to "local" unless running in GKE, otherwies auto-sets to gcp
-          # - name: ENV_PLATFORM
-          #   value: "aws"
+          - name: ENV_PLATFORM
+            value: "aws"
+          - name: ENABLE_TRACING
+            value: "1"
           - name: ENABLE_PROFILER
-            value: "0"
+            value: "1"
           # - name: CYMBAL_BRANDING
           #   value: "true"
           # - name: ENABLE_ASSISTANT
@@ -819,6 +834,29 @@ spec:
     port: 80
     targetPort: 8080
 ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "frontend-ingress"
+  namespace: "default"
+  labels:
+    app: frontend
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend-external
+              port:
+                number: 80
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -836,6 +874,8 @@ spec:
       app: recommendationservice
   template:
     metadata:
+      annotations:
+        "instrumentation.opentelemetry.io/inject-python": "true"
       labels:
         app: recommendationservice
     spec:
@@ -915,6 +955,8 @@ spec:
     metadata:
       labels:
         app: adservice
+      annotations:
+        "instrumentation.opentelemetry.io/inject-java": "true"
     spec:
       serviceAccountName: adservice
       terminationGracePeriodSeconds: 5
