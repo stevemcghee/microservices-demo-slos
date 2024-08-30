@@ -64,7 +64,26 @@ def initStackdriverProfiling():
   return
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
+    def simulateErrorCheck(request, context):
+      # check context for percentage env var
+      percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
+      # roll the dice
+      dice = random.random() * 100
+      # logger.info(" = deciding failure: dice = " + str(dice)) + " < percent = " + str(percent) + "%"
+      if (dice < percent): # not sure if we need a seed, if we have many pods
+        # logger.info(" - Simulating failure")
+        return True
+      else:
+        # logger.info(" + Not simulating failure")
+        return False
+
     def ListRecommendations(self, request, context):
+        # check if we are simulating an error on this request
+        simError = RecommendationService.simulateErrorCheck(request, context)
+        if (simError):
+          context.set_code(grpc.StatusCode.INTERNAL)
+          context.set_details("Simulating a service error for availability testing")
+          return demo_pb2.ListRecommendationsResponse()
         max_responses = 5
         # fetch list of products from product catalog stub
         cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
@@ -104,6 +123,18 @@ if __name__ == "__main__":
         logger.info("Profiler disabled.")
 
     try:
+      if "FAILURE_SIMULATION_PERCENT" in os.environ:
+        raise KeyError()
+      else:
+        logger.info("Failure simulation enabled.")
+      if os.environ[""] >= "1":
+        logger.info("Failure simulation set to " + os.environ["FAILURE_SIMULATION_PERCENT"] + ".")
+      else:
+        logger.info("Failure simulation enabled but set to 0.")
+    except KeyError:
+        logger.info("Failure simulation disabled.")
+
+    try:
       grpc_client_instrumentor = GrpcInstrumentorClient()
       grpc_client_instrumentor.instrument()
       grpc_server_instrumentor = GrpcInstrumentorServer()
@@ -119,6 +150,7 @@ if __name__ == "__main__":
             )
           )
         )
+        logger.info("Tracing enabled.")
     except (KeyError, DefaultCredentialsError):
         logger.info("Tracing disabled.")
     except Exception as e:
