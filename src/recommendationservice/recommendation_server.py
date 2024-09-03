@@ -68,7 +68,7 @@ def simulateErrorCheck(request, context):
   percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
   # roll the dice
   dice = random.random() * 100
-  if (dice < percent): # not sure if we need a seed, if we have many pods
+  if (dice < percent):
     return True
   else:
     return False
