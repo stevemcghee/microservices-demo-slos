@@ -914,7 +914,7 @@ spec:
         - name: DISABLE_PROFILER
           value: "1"
         - name: FAILURE_SIMULATION_PERCENT
-          value: "1.0"
+          value: "0.0"
         resources:
           requests:
             cpu: 100m
