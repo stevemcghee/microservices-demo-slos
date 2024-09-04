@@ -63,23 +63,25 @@ def initStackdriverProfiling():
         logger.warning("Could not initialize Stackdriver Profiler after retrying, giving up")
   return
 
+def simulateErrorCheck(request, context):
+  # check context for percentage env var
+  try:
+    percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
+  except KeyError:
+    return False
+  # roll the dice
+  dice = random.random() * 100
+  if (dice < percent): # not sure if we need a seed, if we have many pods
+    logger.info("Simulating failure!")
+    return True
+  else:
+    return False
+
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
-    def simulateErrorCheck(request, context):
-      # check context for percentage env var
-      percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
-      # roll the dice
-      dice = random.random() * 100
-      # logger.info(" = deciding failure: dice = " + str(dice)) + " < percent = " + str(percent) + "%"
-      if (dice < percent): # not sure if we need a seed, if we have many pods
-        # logger.info(" - Simulating failure")
-        return True
-      else:
-        # logger.info(" + Not simulating failure")
-        return False
 
     def ListRecommendations(self, request, context):
         # check if we are simulating an error on this request
-        simError = RecommendationService.simulateErrorCheck(request, context)
+        simError = simulateErrorCheck(request, context)
         if (simError):
           context.set_code(grpc.StatusCode.INTERNAL)
           context.set_details("Simulating a service error for availability testing")
@@ -127,7 +129,7 @@ if __name__ == "__main__":
         raise KeyError()
       else:
         logger.info("Failure simulation enabled.")
-      if os.environ[""] >= "1":
+      if os.environ[""] > 0:
         logger.info("Failure simulation set to " + os.environ["FAILURE_SIMULATION_PERCENT"] + ".")
       else:
         logger.info("Failure simulation enabled but set to 0.")
