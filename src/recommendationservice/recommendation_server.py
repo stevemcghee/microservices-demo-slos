@@ -65,12 +65,14 @@ def initStackdriverProfiling():
 
 def simulateErrorCheck(request, context):
   # check context for percentage env var
-  percent = float(os.getenv("FAILURE_SIMULATION_PERCENT", 0))
+  try:
+    percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
+  except KeyError:
+    return False
   # roll the dice
   dice = random.random() * 100.00
-  logger.info("dice: " + str(dice) + " percent: " + str(percent) + "")
-  if (dice < percent):
-    logger.info("Simulating a failure :boom:")
+  if (dice < percent): # not sure if we need a seed, if we have many pods
+    logger.info("Simulating failure!")
     return True
   else:
     return False
@@ -123,6 +125,13 @@ if __name__ == "__main__":
         logger.info("Profiler disabled.")
 
     try:
+      if "FAILURE_SIMULATION_PERCENT" in os.environ:
+        percent = os.environ["FAILURE_SIMULATION_PERCENT"]
+        logger.info("Failure simulation enabled.")
+    except KeyError:
+        logger.info("Failure simulation disabled.")
+
+    try:
       grpc_client_instrumentor = GrpcInstrumentorClient()
       grpc_client_instrumentor.instrument()
       grpc_server_instrumentor = GrpcInstrumentorServer()
@@ -142,11 +151,7 @@ if __name__ == "__main__":
     except (KeyError, DefaultCredentialsError):
         logger.info("Tracing disabled.")
     except Exception as e:
-        logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.") 
-
-    if "FAILURE_SIMULATION_PERCENT" in os.environ:
-      percent = os.environ["FAILURE_SIMULATION_PERCENT"]
-      logger.info("Failure simulation set to " + percent)
+        logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.")   logger.info("Failure simulation set to " + percent)
 
     port = os.environ.get('PORT', "8080")
     catalog_addr = os.environ.get('PRODUCT_CATALOG_SERVICE_ADDR', '')
