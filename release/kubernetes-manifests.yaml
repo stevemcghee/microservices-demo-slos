@@ -893,7 +893,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: stevemcgheegcp/recommendationservice:azure
+        image: stevemcgheegcp/recommendationservice:azure2
         ports:
         - containerPort: 8080
         readinessProbe:
