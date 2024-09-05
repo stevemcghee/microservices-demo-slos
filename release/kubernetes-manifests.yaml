@@ -893,7 +893,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: gcr.io/google-samples/microservices-demo/recommendationservice:v0.10.1
+        image: stevemcgheegcp/recommendationservice:azure
         ports:
         - containerPort: 8080
         readinessProbe:
@@ -907,6 +907,8 @@ spec:
         env:
         - name: SIMULATE_FAILURE_PERCENT
           value: "10"
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          value: "InstrumentationKey=6d6211c5-4c87-4b81-9728-075d0469112f;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/;ApplicationId=0150216a-099f-439b-9cbd-29fcad5a1b2f"
         - name: PORT
           value: "8080"
         - name: PRODUCT_CATALOG_SERVICE_ADDR

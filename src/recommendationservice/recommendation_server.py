@@ -35,6 +35,12 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
+# Import the `configure_azure_monitor()` function from the
+# `azure.monitor.opentelemetry` package.
+from azure.monitor.opentelemetry import configure_azure_monitor
+
+# Import the tracing api from the `opentelemetry` package.
+from opentelemetry import trace
 from logger import getJSONLogger
 logger = getJSONLogger('recommendationservice-server')
 
@@ -93,7 +99,9 @@ class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
 
 if __name__ == "__main__":
     logger.info("initializing recommendationservice")
-
+    # Configure OpenTelemetry to use Azure Monitor with the 
+    # APPLICATIONINSIGHTS_CONNECTION_STRING environment variable.
+    configure_azure_monitor()
     try:
       if "DISABLE_PROFILER" in os.environ:
         raise KeyError()
