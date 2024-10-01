@@ -1,0 +1,14 @@
+apiVersion: n9/v1alpha
+kind: Agent
+metadata:
+  name: gcm
+  displayName: Google Cloud Monitoring # optional
+spec:
+  description: GCM agent # optional
+  sourceOf:
+    - Metrics
+  releaseChannel: beta # string, one of: beta || stable
+  queryDelay:
+      unit: Minute # string, one of: Second || Minute
+      value: 720 # numeric, must be a number less than 1440 minutes (24 hours)
+  gcm: {}
