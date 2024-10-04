@@ -108,19 +108,57 @@ data:
   collector-gateway-config-template.yaml: |
     receivers:
       otlp:
-        protocols: 
+        protocols:
+          http:
+            endpoint: "localhost:4318" # datadog agent
           grpc:
+            endpoint: "localhost:4317" # datadog agent
     processors:
+      resourcedetection:
+        detectors: [env, gcp, system]
+        system:
+          resource_attributes:
+            os.description:
+              enabled: true
+            host.arch:
+              enabled: true
+            host.cpu.vendor.id:
+              enabled: true
+            host.cpu.family:
+              enabled: true
+            host.cpu.model.id:
+              enabled: true
+            host.cpu.model.name:
+              enabled: true
+            host.cpu.stepping:
+              enabled: true
+            host.cpu.cache.l2.size:
+              enabled: true
+        timeout: 2s
+        override: false
+
+    connectors:
+      datadog/connector:
+
     exporters:
+      datadog:
+        api:
+          site: us5.datadoghq.com
+          key: b3cc6e441670b8ee2d36da2af4dca0d2
+
       googlecloud:
         project: {{PROJECT_ID}}
     service:
       pipelines:
-        traces:
-          receivers: [otlp] # Receive otlp-formatted data from other collector instances
-          processors: []
-          exporters: [googlecloud] # Export traces directly to Google Cloud
         metrics:
           receivers: [otlp]
           processors: []
-          exporters: [googlecloud] # Export metrics to Google Cloud
+          exporters: [datadog, googlecloud] # Export metrics to Google Cloud, Datadog
+        traces:
+          receivers: [otlp] # Receive otlp-formatted data from other collector instances
+          processors: []
+          exporters: [datadog, googlecloud] # Export traces directly to Google Cloud, Datadog
+        logs:
+          receivers: [otlp] # Receive otlp-formatted data from other collector instances
+          processors: []
+          exporters: [googlecloud] # Export logs directly to Google Cloud

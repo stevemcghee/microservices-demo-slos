@@ -1,0 +1,31 @@
+apiVersion: "datadoghq.com/v2alpha1"
+kind: "DatadogAgent"
+metadata:
+  name: "datadog"
+spec:
+  global:
+    clusterName: "slo-eval-standard"
+    site: "us5.datadoghq.com"
+    credentials:
+      apiSecret:
+        secretName: "datadog-secret"
+        keyName: "api-key"
+  features:
+    apm:
+      instrumentation:
+        enabled: true
+        endabledNamespaces:
+          - "default"
+        libVersions:
+          java: "1"
+          dotnet: "3"
+          python: "2"
+          js: "5"
+          ruby: "2"
+    logCollection:
+      enabled: true
+      containerCollectAll: true
+    usm:
+      enabled: true
+    npm:
+      enabled: true
