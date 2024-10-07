@@ -4,7 +4,7 @@ metadata:
   name: "datadog"
 spec:
   global:
-    clusterName: "slo-eval-standard"
+    clusterName: "slo-eval-standard-mesh"
     site: "us5.datadoghq.com"
     credentials:
       apiSecret:
@@ -14,8 +14,6 @@ spec:
     apm:
       instrumentation:
         enabled: true
-        endabledNamespaces:
-          - "default"
         libVersions:
           java: "1"
           dotnet: "3"
