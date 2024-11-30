@@ -63,8 +63,29 @@ def initStackdriverProfiling():
         logger.warning("Could not initialize Stackdriver Profiler after retrying, giving up")
   return
 
+def simulateErrorCheck(request, context):
+  # check context for percentage env var
+  try:
+    percent = float(os.getenv("SIMULATE_FAILURE_PERCENT", 0))
+  except KeyError:
+    return False
+  # roll the dice
+  dice = random.random() * 100
+  if (dice < percent): # not sure if we need a seed, if we have many pods
+    logger.info("Simulating failure!")
+    return True
+  else:
+    return False
+
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
+
     def ListRecommendations(self, request, context):
+        # check if we are simulating an error on this request
+        simError = simulateErrorCheck(request, context)
+        if (simError):
+          context.set_code(grpc.StatusCode.INTERNAL)
+          context.set_details("Simulating a service error for availability testing")
+          return demo_pb2.ListRecommendationsResponse()
         max_responses = 5
         # fetch list of products from product catalog stub
         cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())
@@ -104,6 +125,18 @@ if __name__ == "__main__":
         logger.info("Profiler disabled.")
 
     try:
+      if "FAILURE_SIMULATION_PERCENT" in os.environ:
+        raise KeyError()
+      else:
+        logger.info("Failure simulation enabled.")
+      if os.environ[""] > 0:
+        logger.info("Failure simulation set to " + os.environ["FAILURE_SIMULATION_PERCENT"] + ".")
+      else:
+        logger.info("Failure simulation enabled but set to 0.")
+    except KeyError:
+        logger.info("Failure simulation disabled.")
+
+    try:
       grpc_client_instrumentor = GrpcInstrumentorClient()
       grpc_client_instrumentor.instrument()
       grpc_server_instrumentor = GrpcInstrumentorServer()
@@ -119,6 +152,7 @@ if __name__ == "__main__":
             )
           )
         )
+        logger.info("Tracing enabled.")
     except (KeyError, DefaultCredentialsError):
         logger.info("Tracing disabled.")
     except Exception as e:
